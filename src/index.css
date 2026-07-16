@@ -136,7 +136,7 @@ body {
 .mine-num-1 { color: #0000ff; font-weight: 900; }
 .mine-num-2 { color: #008000; font-weight: 900; }
 .mine-num-3 { color: #ff0000; font-weight: 900; }
-.mine-num-4 { color: #000080; font-weight: 900; }
+.mine-num-4 { color: #800080; font-weight: 900; }
 .mine-num-5 { color: #800000; font-weight: 900; }
 .mine-num-6 { color: #008080; font-weight: 900; }
 .mine-num-7 { color: #000000; font-weight: 900; }
@@ -197,11 +197,13 @@ body {
 .ms-grid {
   display: grid;
   background-color: #808080;
-  gap: 0;
+  gap: 1px;
   border: 3px solid;
   border-color: #808080 #fff #fff #808080;
   user-select: none;
   position: relative;
+  width: max-content;
+  height: max-content;
 }
 
 .ms-cell {
@@ -210,42 +212,42 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: monospace;
+  font-family: 'DotGothic16', 'MS Sans Serif', -apple-system, sans-serif;
   font-size: 20px;
+  font-weight: bold;
   cursor: pointer;
   background-color: #c0c0c0;
   user-select: none;
   position: relative;
+  box-sizing: border-box;
 }
 
 .ms-cell.unrevealed {
-  border: 2px solid;
+  border: 3px solid;
   border-color: #fff #808080 #808080 #fff;
 }
 
 .ms-cell.unrevealed:active:not(.flagged) {
-  border: 0px;
+  border: 3px solid;
+  border-color: #808080 #c0c0c0 #c0c0c0 #808080;
   background-color: #c0c0c0;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
   padding-top: 2px;
   padding-left: 2px;
 }
 
 .ms-cell.revealed {
-  border: 1px solid #808080;
+  border: none;
   background-color: #c0c0c0;
-  margin: -0.5px;
 }
 
 .ms-cell.exploded {
   background-color: #ff0000 !important;
-  border: 1px solid #808080;
+  border: none;
 }
 
 .ms-cell.wrong-flag {
   background-color: #c0c0c0;
-  border: 1px solid #808080;
+  border: none;
   position: relative;
 }
 
