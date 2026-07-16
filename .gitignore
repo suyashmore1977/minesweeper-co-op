@@ -1,0 +1,7 @@
+node_modules
+dist
+.DS_Store
+*.log
+.system_generated
+.gemini
+package-lock.json

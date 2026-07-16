@@ -1,0 +1,349 @@
+/* Reset and Layout */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+body {
+  background-color: #008080; /* Classic Win95 Teal Desktop Background */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+  color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Classic Win95 Outset/Inset Borders */
+.win95-outset {
+  border: 3px solid;
+  border-color: #fff #808080 #808080 #fff;
+  background-color: #c0c0c0;
+}
+
+.win95-inset {
+  border: 3px solid;
+  border-color: #808080 #fff #fff #808080;
+  background-color: #c0c0c0;
+}
+
+.win95-outset-thin {
+  border: 1.5px solid;
+  border-color: #fff #808080 #808080 #fff;
+}
+
+.win95-inset-thin {
+  border: 1.5px solid;
+  border-color: #808080 #fff #fff #808080;
+}
+
+.win95-button {
+  background-color: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  color: #000;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.win95-button:active {
+  border-color: #808080 #fff #fff #808080;
+  padding: 5px 9px 3px 11px; /* Shift text slightly when pressed */
+}
+
+.win95-button:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0 #fff;
+  cursor: not-allowed;
+  border-color: #fff #808080 #808080 #fff !important;
+}
+
+.win95-button:disabled:active {
+  padding: 4px 10px;
+}
+
+.win95-input {
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  background-color: #fff;
+  color: #000;
+  padding: 4px 6px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+/* Windows 95 Window Frame */
+.win95-window {
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.win95-titlebar {
+  background: linear-gradient(90deg, #000080, #1080d0);
+  color: #fff;
+  padding: 3px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 13px;
+  user-select: none;
+}
+
+.win95-titlebar.inactive {
+  background: #808080;
+}
+
+.win95-title-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.win95-title-btn {
+  width: 16px;
+  height: 14px;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 0;
+  line-height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: unset;
+}
+
+/* Minesweeper Number Colors */
+.mine-num-1 { color: #0000ff; font-weight: 900; }
+.mine-num-2 { color: #008000; font-weight: 900; }
+.mine-num-3 { color: #ff0000; font-weight: 900; }
+.mine-num-4 { color: #000080; font-weight: 900; }
+.mine-num-5 { color: #800000; font-weight: 900; }
+.mine-num-6 { color: #008080; font-weight: 900; }
+.mine-num-7 { color: #000000; font-weight: 900; }
+.mine-num-8 { color: #808080; font-weight: 900; }
+
+/* 7-Segment Digital Display Component */
+.lcd-display {
+  background-color: #000;
+  color: #ff0000;
+  font-family: 'VT323', monospace;
+  font-size: 34px;
+  padding: 0 4px;
+  line-height: 1;
+  letter-spacing: 2px;
+  min-width: 60px;
+  text-align: right;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border: 1px solid #808080;
+}
+
+/* Smiley face retro button styling */
+.smiley-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background-color: #c0c0c0;
+}
+
+/* Custom Scrollbar for Retro Feel */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #dfdfdf;
+  border: 1px solid #808080;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+}
+
+::-webkit-scrollbar-thumb:active {
+  border-color: #808080 #fff #fff #808080;
+}
+
+/* Grid Cells styling */
+.ms-grid {
+  display: grid;
+  background-color: #808080;
+  gap: 0;
+  border: 3px solid;
+  border-color: #808080 #fff #fff #808080;
+  user-select: none;
+  position: relative;
+}
+
+.ms-cell {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 20px;
+  cursor: pointer;
+  background-color: #c0c0c0;
+  user-select: none;
+  position: relative;
+}
+
+.ms-cell.unrevealed {
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+}
+
+.ms-cell.unrevealed:active:not(.flagged) {
+  border: 0px;
+  background-color: #c0c0c0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  padding-top: 2px;
+  padding-left: 2px;
+}
+
+.ms-cell.revealed {
+  border: 1px solid #808080;
+  background-color: #c0c0c0;
+  margin: -0.5px;
+}
+
+.ms-cell.exploded {
+  background-color: #ff0000 !important;
+  border: 1px solid #808080;
+}
+
+.ms-cell.wrong-flag {
+  background-color: #c0c0c0;
+  border: 1px solid #808080;
+  position: relative;
+}
+
+/* Pending tile indicator */
+.ms-cell.pending-approval {
+  animation: pending-blink 1.2s infinite ease-in-out;
+}
+
+@keyframes pending-blink {
+  0% { filter: brightness(1.2); outline: 2px solid #e0c000; }
+  50% { filter: brightness(0.85); outline: 2px solid transparent; }
+  100% { filter: brightness(1.2); outline: 2px solid #e0c000; }
+}
+
+/* Multiplayer Cursor System */
+.cursor-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.remote-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  transition: transform 0.1s linear;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cursor-pointer-svg {
+  width: 14px;
+  height: 18px;
+  filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));
+}
+
+.cursor-label {
+  background-color: var(--cursor-color, #000);
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  margin-top: 4px;
+  margin-left: 8px;
+  font-family: inherit;
+  border: 1px solid #fff;
+}
+
+/* Custom Win95 elements */
+.win95-menu-bar {
+  display: flex;
+  background-color: #c0c0c0;
+  padding: 2px 6px;
+  font-size: 12px;
+  gap: 12px;
+  border-bottom: 1.5px solid #808080;
+  user-select: none;
+}
+
+.win95-menu-item {
+  cursor: pointer;
+  padding: 1px 4px;
+}
+
+.win95-menu-item:hover {
+  background-color: #000080;
+  color: #fff;
+}
+
+.win95-hr {
+  height: 0;
+  border: none;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+  margin: 8px 0;
+}
+
+/* Grid overlay for cursor coordinates checking */
+.grid-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 100%;
+}
+
+@media (max-width: 800px) {
+  .grid-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
