@@ -4,4 +4,3 @@ dist
 *.log
 .system_generated
 .gemini
-package-lock.json
