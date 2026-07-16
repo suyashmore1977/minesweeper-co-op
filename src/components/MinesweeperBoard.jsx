@@ -123,41 +123,11 @@ export default function MinesweeperBoard({ room, network, myPlayerId, isHost }) 
   const { grid } = room.board;
   const { width, height } = room.settings;
 
-  // Retro assets for authentic styling
-  const flagSvg = (
-    <svg width="16" height="16" viewBox="0 0 16 16" style={{ width: '18px', height: '18px', display: 'block' }}>
-      {/* Base */}
-      <rect x="2" y="13" width="12" height="1" fill="#000000" />
-      <rect x="3" y="12" width="10" height="1" fill="#000000" />
-      <rect x="4" y="11" width="8" height="1" fill="#000000" />
-      <rect x="5" y="10" width="6" height="1" fill="#000000" />
-      {/* Pole */}
-      <rect x="8" y="2" width="1" height="8" fill="#000000" />
-      {/* Red flag */}
-      <path d="M 3,2 L 8,2 L 8,7 L 3,7 Z" fill="#ff0000" />
-    </svg>
-  );
-
-  const mineSvg = (
-    <svg width="16" height="16" viewBox="0 0 16 16" style={{ width: '18px', height: '18px', display: 'block' }}>
-      {/* Spikes */}
-      <rect x="7" y="0" width="2" height="16" fill="#000000" />
-      <rect x="0" y="7" width="16" height="2" fill="#000000" />
-      <line x1="2" y1="2" x2="14" y2="14" stroke="#000000" strokeWidth="1.5" />
-      <line x1="2" y1="14" x2="14" y2="2" stroke="#000000" strokeWidth="1.5" />
-      {/* Body */}
-      <rect x="5" y="4" width="6" height="8" fill="#000000" />
-      <rect x="4" y="5" width="8" height="6" fill="#000000" />
-      {/* White reflection shine */}
-      <rect x="6" y="6" width="2" height="2" fill="#ffffff" />
-    </svg>
-  );
-
   // Render cell contents
   const renderCellContent = (cell) => {
     if (cell.isRevealed) {
       if (cell.isMine) {
-        return mineSvg;
+        return '💣';
       }
       if (cell.neighborMines > 0) {
         return cell.neighborMines;
@@ -168,24 +138,23 @@ export default function MinesweeperBoard({ room, network, myPlayerId, isHost }) 
         if (room.gameState === 'lost' && cell.wrongFlag) {
           // Wrongly flagged cell during game over
           return (
-            <div style={{ position: 'relative', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {flagSvg}
+            <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifySelf: 'center' }}>
+              <span style={{ fontSize: '15px' }}>🚩</span>
               <span style={{
                 position: 'absolute',
                 color: '#ff0000',
-                fontSize: '20px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 top: '-3px',
-                left: '2px',
-                textShadow: '1px 1px 1px #fff',
-                pointerEvents: 'none'
+                left: '4px',
+                textShadow: '1px 1px 1px #fff'
               }}>
                 ✕
               </span>
             </div>
           );
         }
-        return flagSvg;
+        return '🚩';
       }
 
       if (cell.isQuestionMark) {
