@@ -34,6 +34,7 @@ function createEmptyBoard(width, height) {
         neighborMines: 0,
         isRevealed: false,
         isFlagged: false,
+        isQuestionMark: false,
       });
     }
     grid.push(row);
@@ -116,6 +117,7 @@ function revealTile(room, startR, startC) {
 
   if (cell.isMine) {
     cell.isRevealed = true;
+    cell.isQuestionMark = false;
     handleGameOver(room, false);
     return [cell];
   }
@@ -123,6 +125,7 @@ function revealTile(room, startR, startC) {
   const revealedCells = [];
   const queue = [[startR, startC]];
   cell.isRevealed = true;
+  cell.isQuestionMark = false;
   revealedCells.push(cell);
 
   while (queue.length > 0) {
@@ -138,6 +141,7 @@ function revealTile(room, startR, startC) {
             const neighbor = grid[nr][nc];
             if (!neighbor.isRevealed && !neighbor.isFlagged && !neighbor.isMine) {
               neighbor.isRevealed = true;
+              neighbor.isQuestionMark = false;
               revealedCells.push(neighbor);
               queue.push([nr, nc]);
             }
@@ -233,8 +237,10 @@ function handleGameOver(room, won) {
       if (cell.isMine) {
         if (won) {
           cell.isFlagged = true;
+          cell.isQuestionMark = false;
         } else if (!cell.isRevealed && !cell.isFlagged) {
           cell.isRevealed = true;
+          cell.isQuestionMark = false;
         }
       } else if (cell.isFlagged) {
         room.board.grid[r][c].wrongFlag = true;
@@ -401,10 +407,23 @@ export class GameEngine {
 
     if (type === 'flag') {
       if (cell.isRevealed) return;
-      cell.isFlagged = !cell.isFlagged;
-      const logText = cell.isFlagged
-        ? `${player.username} flagged tile (${row + 1}, ${col + 1})`
-        : `${player.username} unflagged tile (${row + 1}, ${col + 1})`;
+      
+      let logText = '';
+      if (!cell.isFlagged && !cell.isQuestionMark) {
+        // Unrevealed -> Flagged
+        cell.isFlagged = true;
+        logText = `${player.username} flagged tile (${row + 1}, ${col + 1})`;
+      } else if (cell.isFlagged) {
+        // Flagged -> Question Mark
+        cell.isFlagged = false;
+        cell.isQuestionMark = true;
+        logText = `${player.username} marked tile (${row + 1}, ${col + 1}) with question mark`;
+      } else {
+        // Question Mark -> Unrevealed
+        cell.isQuestionMark = false;
+        logText = `${player.username} cleared tile (${row + 1}, ${col + 1})`;
+      }
+
       room._addLog('action', logText, player.color);
       checkWinCondition(room);
     } else if (type === 'reveal' || type === 'chord') {

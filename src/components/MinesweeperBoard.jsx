@@ -157,6 +157,10 @@ export default function MinesweeperBoard({ room, network, myPlayerId, isHost }) 
         return '🚩';
       }
 
+      if (cell.isQuestionMark) {
+        return <span style={{ fontWeight: 'bold', color: '#000080' }}>?</span>;
+      }
+
       // If it is pending approval, show a colored indicator
       const pendingAction = room.pendingActions.find(a => a.row === cell.row && a.col === cell.col);
       if (pendingAction) {
@@ -179,7 +183,7 @@ export default function MinesweeperBoard({ room, network, myPlayerId, isHost }) 
   };
 
   return (
-    <div className="win95-window win95-outset" style={{ padding: '6px', userSelect: 'none' }}>
+    <div className="win95-window win95-outset" style={{ padding: '6px', userSelect: 'none', maxWidth: '100%' }}>
 
       {/* Menu / Difficulty Bar */}
       <div className="win95-menu-bar">
@@ -256,102 +260,112 @@ export default function MinesweeperBoard({ room, network, myPlayerId, isHost }) 
           <SevenSegment value={room.timer} />
         </div>
 
-        {/* Board Grid with relative cursor tracking overlay */}
-        <div
-          ref={gridRef}
-          className="ms-grid"
-          style={{
-            gridTemplateColumns: `repeat(${width}, 32px)`,
-            gridTemplateRows: `repeat(${height}, 32px)`,
-            width: `${width * 32 + 6}px`,
-            height: `${height * 32 + 6}px`
-          }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          {grid.map((row, rIdx) =>
-            row.map((cell, cIdx) => {
-              const isPending = room.pendingActions.some(a => a.row === rIdx && a.col === cIdx);
-              let cellClass = `ms-cell ${cell.isRevealed ? 'revealed' : 'unrevealed'}`;
+        {/* Scrollable grid container to make it fit on smaller screens */}
+        <div style={{ maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden' }}>
+          <div
+            ref={gridRef}
+            className="ms-grid"
+            style={{
+              gridTemplateColumns: `repeat(${width}, 32px)`,
+              gridTemplateRows: `repeat(${height}, 32px)`,
+              width: `${width * 32 + 6}px`,
+              height: `${height * 32 + 6}px`
+            }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            {grid.map((row, rIdx) =>
+              row.map((cell, cIdx) => {
+                const isPending = room.pendingActions.some(a => a.row === rIdx && a.col === cIdx);
+                let cellClass = `ms-cell ${cell.isRevealed ? 'revealed' : 'unrevealed'}`;
 
-              if (cell.isRevealed && cell.isMine) {
-                cellClass += ' exploded';
-              }
-              if (room.gameState === 'lost' && cell.wrongFlag) {
-                cellClass += ' wrong-flag';
-              }
-              if (isPending) {
-                cellClass += ' pending-approval';
-              }
+                if (cell.isRevealed && cell.isMine) {
+                  cellClass += ' exploded';
+                }
+                if (room.gameState === 'lost' && cell.wrongFlag) {
+                  cellClass += ' wrong-flag';
+                }
+                if (isPending) {
+                  cellClass += ' pending-approval';
+                }
 
-              const numClass = cell.isRevealed && cell.neighborMines > 0 ? `mine-num-${cell.neighborMines}` : '';
+                const numClass = cell.isRevealed && cell.neighborMines > 0 ? `mine-num-${cell.neighborMines}` : '';
 
-              return (
-                <div
-                  key={`${rIdx}-${cIdx}`}
-                  className={`${cellClass} ${numClass}`}
-                  onMouseDown={(e) => {
-                    if (room.gameState === 'won' || room.gameState === 'lost') return;
-                    if (e.button === 0 && !cell.isRevealed && !cell.isFlagged) {
-                      setIsMouseDown(true);
-                    }
-                  }}
-                  onMouseUp={(e) => {
-                    setIsMouseDown(false);
-                    if (room.gameState === 'won' || room.gameState === 'lost') return;
-
-                    if (e.button === 0) {
-                      if (cell.isRevealed) {
-                        handleCellClick(rIdx, cIdx, 'chord');
-                      } else {
-                        handleCellClick(rIdx, cIdx, 'reveal');
+                return (
+                  <div
+                    key={`${rIdx}-${cIdx}`}
+                    className={`${cellClass} ${numClass}`}
+                    onMouseDown={(e) => {
+                      if (room.gameState === 'won' || room.gameState === 'lost') return;
+                      if (e.button === 1) {
+                        e.preventDefault(); // prevent middle-click auto-scroll
                       }
-                    }
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    if (room.gameState === 'won' || room.gameState === 'lost') return;
-                    handleCellClick(rIdx, cIdx, 'flag');
-                  }}
-                  onDoubleClick={() => {
-                    handleCellClick(rIdx, cIdx, 'chord');
-                  }}
-                >
-                  {renderCellContent(cell)}
-                </div>
-              );
-            })
-          )}
+                      if (e.button === 0 && !cell.isRevealed && !cell.isFlagged) {
+                        setIsMouseDown(true);
+                      }
+                    }}
+                    onMouseUp={(e) => {
+                      setIsMouseDown(false);
+                      if (room.gameState === 'won' || room.gameState === 'lost') return;
 
-          {/* Render Remote User Cursors Overlay */}
-          <div className="cursor-container">
-            {Object.entries(filteredCursors).map(([id, cursor]) => {
-              if (!cursor || cursor.x < 0 || cursor.y < 0) return null;
-              return (
-                <div
-                  key={id}
-                  className="remote-cursor"
-                  style={{
-                    left: `${cursor.x}px`,
-                    top: `${cursor.y}px`,
-                    transform: 'translate(-2px, -2px)',
-                    '--cursor-color': cursor.color,
-                  }}
-                >
-                  <svg className="cursor-pointer-svg" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M0 0V15L4.5 10.5L9.5 17.5L12 15.5L7 9L12.5 8L0 0Z"
-                      fill={cursor.color}
-                      stroke="white"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                  <div className="cursor-label">{cursor.username}</div>
-                </div>
-              );
-            })}
+                      if (e.button === 0) {
+                        if (cell.isRevealed) {
+                          handleCellClick(rIdx, cIdx, 'chord');
+                        } else {
+                          handleCellClick(rIdx, cIdx, 'reveal');
+                        }
+                      } else if (e.button === 1) {
+                        e.preventDefault();
+                        if (cell.isRevealed) {
+                          handleCellClick(rIdx, cIdx, 'chord');
+                        }
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (room.gameState === 'won' || room.gameState === 'lost') return;
+                      handleCellClick(rIdx, cIdx, 'flag');
+                    }}
+                    onDoubleClick={() => {
+                      handleCellClick(rIdx, cIdx, 'chord');
+                    }}
+                  >
+                    {renderCellContent(cell)}
+                  </div>
+                );
+              })
+            )}
+
+            {/* Render Remote User Cursors Overlay */}
+            <div className="cursor-container">
+              {Object.entries(filteredCursors).map(([id, cursor]) => {
+                if (!cursor || cursor.x < 0 || cursor.y < 0) return null;
+                return (
+                  <div
+                    key={id}
+                    className="remote-cursor"
+                    style={{
+                      left: `${cursor.x}px`,
+                      top: `${cursor.y}px`,
+                      transform: 'translate(-2px, -2px)',
+                      '--cursor-color': cursor.color,
+                    }}
+                  >
+                    <svg className="cursor-pointer-svg" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M0 0V15L4.5 10.5L9.5 17.5L12 15.5L7 9L12.5 8L0 0Z"
+                        fill={cursor.color}
+                        stroke="white"
+                        strokeWidth="1.5"
+                      />
+                    </svg>
+                    <div className="cursor-label">{cursor.username}</div>
+                  </div>
+                );
+              })}
+            </div>
+
           </div>
-
         </div>
 
       </div>
