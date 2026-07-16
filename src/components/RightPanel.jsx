@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, Copy, MessageSquare, ShieldAlert, ShieldCheck } from 'lucide-react';
 
-export default function RightPanel({ room, socket, myPlayerId }) {
+export default function RightPanel({ room, network, myPlayerId }) {
   const [chatMsg, setChatMsg] = useState('');
   const [copied, setCopied] = useState(false);
   const logContainerRef = useRef(null);
@@ -24,24 +24,24 @@ export default function RightPanel({ room, socket, myPlayerId }) {
   const handleSendChat = (e) => {
     e.preventDefault();
     if (!chatMsg.trim()) return;
-    socket.emit('send_chat', chatMsg.trim());
+    network.emit('send_chat', chatMsg.trim());
     setChatMsg('');
   };
 
   const handleApprove = (actionId) => {
-    socket.emit('approve_action', { actionId });
+    network.emit('approve_action', { actionId });
   };
 
   const handleReject = (actionId) => {
-    socket.emit('reject_action', { actionId });
+    network.emit('reject_action', { actionId });
   };
 
   const handleToggleApproval = () => {
-    socket.emit('toggle_approval');
+    network.emit('toggle_approval');
   };
 
   const handleReset = () => {
-    socket.emit('reset_game');
+    network.emit('reset_game');
   };
 
   return (
@@ -56,7 +56,7 @@ export default function RightPanel({ room, socket, myPlayerId }) {
 
       {/* Content panel */}
       <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, overflowY: 'auto' }}>
-        
+
         {/* Room Info */}
         <div className="win95-inset" style={{ padding: '8px', backgroundColor: '#e6e6e6' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -65,9 +65,9 @@ export default function RightPanel({ room, socket, myPlayerId }) {
               <span style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 'bold', color: '#000080', letterSpacing: '1px' }}>
                 {room.id}
               </span>
-              <button 
-                className="win95-button" 
-                style={{ padding: '2px 4px', minWidth: 'unset' }} 
+              <button
+                className="win95-button"
+                style={{ padding: '2px 4px', minWidth: 'unset' }}
                 onClick={copyRoomCode}
                 title="Copy Room Code"
               >
@@ -89,26 +89,26 @@ export default function RightPanel({ room, socket, myPlayerId }) {
           </div>
           <div className="win95-inset" style={{ backgroundColor: '#fff', maxHeight: '100px', overflowY: 'auto', padding: '4px' }}>
             {room.players.map((player) => (
-              <div 
-                key={player.id} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+              <div
+                key={player.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '2px 4px', 
+                  padding: '2px 4px',
                   fontSize: '13px',
                   borderBottom: '1px solid #f0f0f0'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div 
-                    style={{ 
-                      width: '10px', 
-                      height: '10px', 
-                      borderRadius: '50%', 
+                  <div
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
                       backgroundColor: player.color,
                       border: '1px solid #404040'
-                    }} 
+                    }}
                   />
                   <span style={{ fontWeight: player.id === myPlayerId ? 'bold' : 'normal' }}>
                     {player.username} {player.id === myPlayerId && '(You)'}
@@ -128,7 +128,7 @@ export default function RightPanel({ room, socket, myPlayerId }) {
         <div className="win95-inset" style={{ padding: '6px', backgroundColor: '#dfdfdf' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '11px', fontWeight: 'bold' }}>APPROVAL SYSTEM:</span>
-            <button 
+            <button
               className="win95-button"
               onClick={handleToggleApproval}
               style={{ fontSize: '10px', padding: '2px 6px', display: 'flex', gap: '3px', alignItems: 'center' }}
@@ -147,7 +147,7 @@ export default function RightPanel({ room, socket, myPlayerId }) {
             </button>
           </div>
           <p style={{ fontSize: '10px', color: '#555', marginTop: '4px', lineHeight: '1.2' }}>
-            {room.settings.approvalMode 
+            {room.settings.approvalMode
               ? "Left clicks are queued. Another player must approve them before execution."
               : "All player clicks are executed immediately."
             }
@@ -159,12 +159,12 @@ export default function RightPanel({ room, socket, myPlayerId }) {
           <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>
             ⏳ PENDING APPROVALS ({room.pendingActions.length})
           </div>
-          <div 
-            className="win95-inset" 
-            style={{ 
-              backgroundColor: '#fff', 
-              flex: 1, 
-              overflowY: 'auto', 
+          <div
+            className="win95-inset"
+            style={{
+              backgroundColor: '#fff',
+              flex: 1,
+              overflowY: 'auto',
               padding: '6px',
               display: 'flex',
               flexDirection: 'column',
@@ -179,12 +179,12 @@ export default function RightPanel({ room, socket, myPlayerId }) {
               room.pendingActions.map((action) => {
                 const isMyAction = action.playerId === myPlayerId;
                 return (
-                  <div 
-                    key={action.id} 
+                  <div
+                    key={action.id}
                     className="win95-outset-thin"
-                    style={{ 
-                      padding: '4px', 
-                      backgroundColor: '#e6e6e6', 
+                    style={{
+                      padding: '4px',
+                      backgroundColor: '#e6e6e6',
                       fontSize: '12px',
                       display: 'flex',
                       flexDirection: 'column',
@@ -205,16 +205,16 @@ export default function RightPanel({ room, socket, myPlayerId }) {
                         {isMyAction ? "Awaiting friend approval..." : "Needs your approval"}
                       </span>
                       <div style={{ display: 'flex', gap: '3px' }}>
-                        <button 
-                          className="win95-button" 
+                        <button
+                          className="win95-button"
                           style={{ padding: '1px 6px', fontSize: '10px', color: '#008000', fontWeight: 'bold' }}
                           onClick={() => handleApprove(action.id)}
                           disabled={isMyAction}
                         >
                           Approve
                         </button>
-                        <button 
-                          className="win95-button" 
+                        <button
+                          className="win95-button"
                           style={{ padding: '1px 6px', fontSize: '10px', color: '#ff0000', fontWeight: 'bold' }}
                           onClick={() => handleReject(action.id)}
                         >
@@ -234,18 +234,18 @@ export default function RightPanel({ room, socket, myPlayerId }) {
           <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <MessageSquare size={14} /> LIVE LOG & CHAT
           </div>
-          
+
           {/* Logs scrollable container */}
-          <div 
-            className="win95-inset" 
+          <div
+            className="win95-inset"
             ref={logContainerRef}
-            style={{ 
-              backgroundColor: '#000', 
-              color: '#0f0', 
-              fontFamily: 'monospace', 
+            style={{
+              backgroundColor: '#000',
+              color: '#0f0',
+              fontFamily: 'monospace',
               fontSize: '11px',
-              padding: '6px', 
-              flex: 1, 
+              padding: '6px',
+              flex: 1,
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
@@ -274,9 +274,9 @@ export default function RightPanel({ room, socket, myPlayerId }) {
 
           {/* Chat Form input */}
           <form onSubmit={handleSendChat} style={{ display: 'flex', marginTop: '4px', gap: '2px' }}>
-            <input 
-              type="text" 
-              className="win95-input" 
+            <input
+              type="text"
+              className="win95-input"
               style={{ flex: 1, fontSize: '12px', padding: '2px 4px' }}
               placeholder="Send message..."
               value={chatMsg}

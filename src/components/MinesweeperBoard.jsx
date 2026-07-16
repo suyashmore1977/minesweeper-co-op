@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SevenSegment from './SevenSegment';
 
-export default function MinesweeperBoard({ room, socket, myPlayerId }) {
+export default function MinesweeperBoard({ room, network, myPlayerId, isHost }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [remoteCursors, setRemoteCursors] = useState({});
   const gridRef = useRef(null);
@@ -19,8 +19,15 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
 
   // Sync remote cursor tracking
   useEffect(() => {
-    if (!socket) return;
+    if (!network) return;
 
+    if (isHost) {
+      // Host receives cursors via the hostRemoteCursors prop on network
+      // This is handled reactively via the network interface
+      return;
+    }
+
+    // Client: listen for cursor events from host
     const handleRemoteCursor = (data) => {
       setRemoteCursors(prev => ({
         ...prev,
@@ -28,11 +35,10 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
       }));
     };
 
-    socket.on('remote_cursor_move', handleRemoteCursor);
+    network.on('remote_cursor_move', handleRemoteCursor);
 
     // Clean up cursor if player leaves
     const handleRoomState = (updatedRoom) => {
-      // Find active players
       const activeIds = updatedRoom.players.map(p => p.id);
       setRemoteCursors(prev => {
         const clean = { ...prev };
@@ -45,28 +51,41 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
       });
     };
 
-    socket.on('room_state', handleRoomState);
+    network.on('room_state', handleRoomState);
 
     return () => {
-      socket.off('remote_cursor_move', handleRemoteCursor);
-      socket.off('room_state', handleRoomState);
+      network.off('remote_cursor_move', handleRemoteCursor);
+      network.off('room_state', handleRoomState);
     };
-  }, [socket]);
+  }, [network, isHost]);
+
+  // For host: use the cursor data passed through the network interface
+  const activeCursors = isHost
+    ? (network?.hostRemoteCursors || {})
+    : remoteCursors;
+
+  // Clean cursors when players leave (for host)
+  const filteredCursors = {};
+  const activePlayerIds = room.players.map(p => p.id);
+  Object.entries(activeCursors).forEach(([id, cursor]) => {
+    if (activePlayerIds.includes(id) && id !== myPlayerId) {
+      filteredCursors[id] = cursor;
+    }
+  });
 
   // Track mouse coordinates over the board and emit
   const handleMouseMove = (e) => {
-    if (!socket || !gridRef.current) return;
+    if (!network || !gridRef.current) return;
     const rect = gridRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Optional: Calculate row/col under cursor
     const cellWidth = 32;
     const cellHeight = 32;
     const col = Math.floor(x / cellWidth);
     const row = Math.floor(y / cellHeight);
 
-    socket.emit('cursor_move', {
+    network.emit('cursor_move', {
       x,
       y,
       cellRow: row,
@@ -75,23 +94,22 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
   };
 
   const handleMouseLeave = () => {
-    if (!socket) return;
-    // Move cursor off-screen for other players
-    socket.emit('cursor_move', { x: -500, y: -500, cellRow: -1, cellCol: -1 });
+    if (!network) return;
+    network.emit('cursor_move', { x: -500, y: -500, cellRow: -1, cellCol: -1 });
   };
 
   // Click actions
   const handleCellClick = (r, c, type) => {
     if (room.gameState === 'won' || room.gameState === 'lost') return;
-    socket.emit('game_action', { row: r, col: c, type });
+    network.emit('game_action', { row: r, col: c, type });
   };
 
   const handleReset = () => {
-    socket.emit('reset_game');
+    network.emit('reset_game');
   };
 
   const handleChangeDifficulty = (difficulty) => {
-    socket.emit('change_difficulty', { difficulty });
+    network.emit('change_difficulty', { difficulty });
   };
 
   // Determine smiley state
@@ -122,12 +140,12 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
           return (
             <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifySelf: 'center' }}>
               <span style={{ fontSize: '15px' }}>🚩</span>
-              <span style={{ 
-                position: 'absolute', 
-                color: '#ff0000', 
-                fontSize: '22px', 
-                fontWeight: 'bold', 
-                top: '-3px', 
+              <span style={{
+                position: 'absolute',
+                color: '#ff0000',
+                fontSize: '22px',
+                fontWeight: 'bold',
+                top: '-3px',
                 left: '4px',
                 textShadow: '1px 1px 1px #fff'
               }}>
@@ -138,20 +156,20 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
         }
         return '🚩';
       }
-      
+
       // If it is pending approval, show a colored indicator
       const pendingAction = room.pendingActions.find(a => a.row === cell.row && a.col === cell.col);
       if (pendingAction) {
         return (
-          <div 
-            style={{ 
-              width: '10px', 
-              height: '10px', 
-              borderRadius: '50%', 
+          <div
+            style={{
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
               backgroundColor: pendingAction.color,
               border: '1px solid #fff',
               boxShadow: '0 0 3px #000'
-            }} 
+            }}
             title={`Suggested by ${pendingAction.username}`}
           />
         );
@@ -162,16 +180,16 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
 
   return (
     <div className="win95-window win95-outset" style={{ padding: '6px', userSelect: 'none' }}>
-      
+
       {/* Menu / Difficulty Bar */}
       <div className="win95-menu-bar">
         <span style={{ fontWeight: 'bold', marginRight: '6px' }}>Game</span>
         <div style={{ display: 'flex', gap: '8px', color: '#555' }}>
-          <span 
+          <span
             onClick={() => handleChangeDifficulty('beginner')}
-            style={{ 
+            style={{
               cursor: 'pointer',
-              color: room.settings.difficulty === 'beginner' ? '#000' : '#808080', 
+              color: room.settings.difficulty === 'beginner' ? '#000' : '#808080',
               fontWeight: room.settings.difficulty === 'beginner' ? 'bold' : 'normal',
               textDecoration: room.settings.difficulty === 'beginner' ? 'underline' : 'none'
             }}
@@ -179,11 +197,11 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
             Beginner
           </span>
           <span>|</span>
-          <span 
+          <span
             onClick={() => handleChangeDifficulty('intermediate')}
-            style={{ 
+            style={{
               cursor: 'pointer',
-              color: room.settings.difficulty === 'intermediate' ? '#000' : '#808080', 
+              color: room.settings.difficulty === 'intermediate' ? '#000' : '#808080',
               fontWeight: room.settings.difficulty === 'intermediate' ? 'bold' : 'normal',
               textDecoration: room.settings.difficulty === 'intermediate' ? 'underline' : 'none'
             }}
@@ -191,11 +209,11 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
             Intermediate
           </span>
           <span>|</span>
-          <span 
+          <span
             onClick={() => handleChangeDifficulty('expert')}
-            style={{ 
+            style={{
               cursor: 'pointer',
-              color: room.settings.difficulty === 'expert' ? '#000' : '#808080', 
+              color: room.settings.difficulty === 'expert' ? '#000' : '#808080',
               fontWeight: room.settings.difficulty === 'expert' ? 'bold' : 'normal',
               textDecoration: room.settings.difficulty === 'expert' ? 'underline' : 'none'
             }}
@@ -207,14 +225,14 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
 
       {/* Internal Beveled Frame (holds status header and grid) */}
       <div className="win95-inset" style={{ padding: '6px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        
+
         {/* Status Header */}
-        <div 
-          className="win95-inset-thin" 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
+        <div
+          className="win95-inset-thin"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             padding: '4px 6px',
             backgroundColor: '#c0c0c0',
             height: '52px'
@@ -224,8 +242,8 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
           <SevenSegment value={calculateFlagsRemaining()} />
 
           {/* Smiley Reset Button */}
-          <button 
-            className="win95-button smiley-btn" 
+          <button
+            className="win95-button smiley-btn"
             onClick={handleReset}
             onMouseDown={() => setIsMouseDown(true)}
             onMouseUp={() => setIsMouseDown(false)}
@@ -239,23 +257,23 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
         </div>
 
         {/* Board Grid with relative cursor tracking overlay */}
-        <div 
+        <div
           ref={gridRef}
-          className="ms-grid" 
-          style={{ 
+          className="ms-grid"
+          style={{
             gridTemplateColumns: `repeat(${width}, 32px)`,
             gridTemplateRows: `repeat(${height}, 32px)`,
-            width: `${width * 32 + 6}px`, // 32px * width + border spacing
+            width: `${width * 32 + 6}px`,
             height: `${height * 32 + 6}px`
           }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          {grid.map((row, rIdx) => 
+          {grid.map((row, rIdx) =>
             row.map((cell, cIdx) => {
               const isPending = room.pendingActions.some(a => a.row === rIdx && a.col === cIdx);
               let cellClass = `ms-cell ${cell.isRevealed ? 'revealed' : 'unrevealed'}`;
-              
+
               if (cell.isRevealed && cell.isMine) {
                 cellClass += ' exploded';
               }
@@ -281,9 +299,8 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
                   onMouseUp={(e) => {
                     setIsMouseDown(false);
                     if (room.gameState === 'won' || room.gameState === 'lost') return;
-                    
+
                     if (e.button === 0) {
-                      // Left click: chord if already revealed, else reveal
                       if (cell.isRevealed) {
                         handleCellClick(rIdx, cIdx, 'chord');
                       } else {
@@ -292,13 +309,11 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
                     }
                   }}
                   onContextMenu={(e) => {
-                    e.preventDefault(); // Disable default right-click menu
+                    e.preventDefault();
                     if (room.gameState === 'won' || room.gameState === 'lost') return;
-                    // Right click: flag
                     handleCellClick(rIdx, cIdx, 'flag');
                   }}
                   onDoubleClick={() => {
-                    // Double click: chord reveal
                     handleCellClick(rIdx, cIdx, 'chord');
                   }}
                 >
@@ -310,11 +325,10 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
 
           {/* Render Remote User Cursors Overlay */}
           <div className="cursor-container">
-            {Object.entries(remoteCursors).map(([id, cursor]) => {
-              // Hide cursor if out of bounds/negative
+            {Object.entries(filteredCursors).map(([id, cursor]) => {
               if (!cursor || cursor.x < 0 || cursor.y < 0) return null;
               return (
-                <div 
+                <div
                   key={id}
                   className="remote-cursor"
                   style={{
@@ -325,10 +339,10 @@ export default function MinesweeperBoard({ room, socket, myPlayerId }) {
                   }}
                 >
                   <svg className="cursor-pointer-svg" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path 
-                      d="M0 0V15L4.5 10.5L9.5 17.5L12 15.5L7 9L12.5 8L0 0Z" 
-                      fill={cursor.color} 
-                      stroke="white" 
+                    <path
+                      d="M0 0V15L4.5 10.5L9.5 17.5L12 15.5L7 9L12.5 8L0 0Z"
+                      fill={cursor.color}
+                      stroke="white"
                       strokeWidth="1.5"
                     />
                   </svg>
